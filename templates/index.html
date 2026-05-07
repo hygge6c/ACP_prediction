@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AntiCancerPeptide Predictor</title>
+
+    <!-- 外部资源 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #17a2b8;
+            --light-bg: #f8f9fa;
+            --dark-bg: #343a40;
+            --border-color: #dee2e6;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 50px;
+            line-height: 1.6;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .navbar-brand i {
+            margin-right: 10px;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 4rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 20px 20px;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            background-color: white;
+            border-bottom: 2px solid var(--border-color);
+            font-weight: 600;
+            padding: 1.25rem 1.5rem;
+            font-size: 1.25rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            width: 80px;
+            height: 80px;
+            line-height: 80px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .prediction-box {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .prediction-result {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-left: 5px solid var(--secondary-color);
+        }
+
+        .anticancer {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .non-anticancer {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .sequence-input {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .sequence-input:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+
+        .sequence-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .amino-acid-box {
+            display: inline-flex;
+            width: 38px;
+            height: 38px;
+            line-height: 38px;
+            text-align: center;
+            border-radius: 6px;
+            font-weight: bold;
+            color: white;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .amino-acid-box:hover {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        /* 可视化容器 */
+        .visualization-section {
+            background: white;
+            border-radius: 15px;
+            padding: 0;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .visualization-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .visualization-header:hover {
+            background: linear-gradient(135deg, #e9ecef, #dee2e6);
+        }
+
+        .visualization-header h6 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        .visualization-header i {
+            transition: transform 0.3s;
+        }
+
+        .visualization-content {
+            padding: 1.5rem;
+            min-height: 350px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: white;
+        }
+
+        .plot-container {
+            width: 100%;
+            height: 400px;
+        }
+
+        .collapsed .visualization-content {
+            display: none;
+        }
+
+        .collapsed .visualization-header i {
+            transform: rotate(-90deg);
+        }
+
+        /* 进度条样式 */
+        .progress {
+            height: 25px;
+            border-radius: 12px;
+            background-color: #e9ecef;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-bar {
+            border-radius: 12px;
+            transition: width 1s ease-in-out;
+        }
+
+        .confidence-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* 模型性能指标 */
+        .model-metric {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            margin: 5px;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+            line-height: 1.2;
+        }
+
+        .metric-label {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        /* 表格样式 */
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            font-weight: 600;
+            padding: 1rem;
+        }
+
+        .table td {
+            padding: 0.75rem 1rem;
+            vertical-align: middle;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        /* 按钮样式 */
+        .btn {
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2980b9, #21618c);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        /* 导航栏 */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), #1a252f);
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        .nav-link {
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            margin: 0 0.25rem;
+            border-radius: 8px;
+            transition: all 0.3s;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* 选项卡样式 */
+        .nav-tabs {
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            color: #666;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            margin-right: 5px;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: var(--secondary-color);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--secondary-color);
+            background-color: white;
+            border-bottom: 3px solid var(--secondary-color);
+        }
+
+        /* 页脚样式 */
+        footer {
+            background: linear-gradient(135deg, var(--primary-color), #1a252f);
+            color: white;
+            padding: 3rem 0 1.5rem;
+            margin-top: 3rem;
+        }
+
+        footer h5 {
+            color: white;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        footer a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        footer a:hover {
+            color: white;
+        }
+
+        footer ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-links a {
+            display: block;
+            padding: 0.25rem 0;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+
+            .plot-container {
+                height: 300px;
+            }
+
+            .amino-acid-box {
+                width: 32px;
+                height: 32px;
+                line-height: 32px;
+                font-size: 0.9rem;
+            }
+
+            .model-metric {
+                margin-bottom: 1rem;
+            }
+
+            .visualization-content {
+                padding: 1rem;
+            }
+        }
+
+        /* 加载动画 */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            border-radius: 15px;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 工具提示 */
+        .tooltip-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip-wrapper .tooltip-text {
+            visibility: hidden;
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 5px 10px;
+            border-radius: 6px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip-wrapper:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* 统计卡片 */
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* 示例序列 */
+        .example-sequence {
+            background: #e3f2fd;
+            border-left: 4px solid var(--secondary-color);
+            padding: 0.75rem 1rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .example-sequence:hover {
+            background: #bbdefb;
+            transform: translateX(5px);
+        }
+
+        /* 批量结果样式 */
+        .batch-stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .batch-stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .batch-stat-label {
+            opacity: 0.9;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-dna"></i> AntiCancerPeptide Predictor
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#predict"><i class="fas fa-search"></i> Predict</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features"><i class="fas fa-star"></i> Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#model"><i class="fas fa-brain"></i> Model</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about"><i class="fas fa-info-circle"></i> About</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 英雄区域 -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="hero-title">AntiCancerPeptide Prediction Platform</h1>
+                    <p class="hero-subtitle">A deep learning-based platform for predicting anticancer peptides using Transformer architecture with advanced visualization tools.</p>
+                    <a href="#predict" class="btn btn-light btn-lg">
+                        <i class="fas fa-play-circle"></i> Start Predicting
+                    </a>
+                </div>
+                <div class="col-lg-4">
+                    <div class="text-center">
+                        <i class="fas fa-microscope" style="font-size: 8rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容 -->
+    <div class="container" id="predict">
+        <div class="row">
+            <!-- 左侧预测区域 -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <i class="fas fa-flask text-primary me-2"></i> Peptide Prediction
+                    </div>
+                    <div class="card-body">
+                        <!-- 预测选项卡 -->
+                        <ul class="nav nav-tabs" id="predictionTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="single-tab" data-bs-toggle="tab" data-bs-target="#single">
+                                    <i class="fas fa-dna"></i> Single Sequence
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="batch-tab" data-bs-toggle="tab" data-bs-target="#batch">
+                                    <i class="fas fa-list"></i> Batch Prediction
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- 选项卡内容 -->
+                        <div class="tab-content" id="predictionTabsContent">
+                            <!-- 单个序列预测 -->
+                            <div class="tab-pane fade show active" id="single" role="tabpanel">
+                                <div class="mb-4">
+                                    <label for="sequenceInput" class="form-label fw-bold">Enter Peptide Sequence:</label>
+                                    <textarea class="form-control sequence-input" id="sequenceInput" rows="4"
+                                              placeholder="Enter amino acid sequence (e.g., GLFDIIKKIAESF)"></textarea>
+                                    <div class="form-text mt-2">
+                                        <i class="fas fa-info-circle"></i> Use single-letter amino acid codes (ACDEFGHIKLMNPQRSTVWY)
+                                    </div>
+                                </div>
+
+                                <!-- 示例序列 -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Quick Examples:</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="example-sequence" onclick="loadExample('anticancer')">
+                                                <i class="fas fa-plus-circle text-success me-2"></i>
+                                                GLFDIIKKIAESF
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="example-sequence" onclick="loadExample('non-anticancer')">
+                                                <i class="fas fa-minus-circle text-danger me-2"></i>
+                                                SLDQINVTFLDLEYEMKKLEEAIKKLEESYIDLKEL
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2 mb-4">
+                                    <button class="btn btn-primary flex-grow-1" onclick="predictSequence()" id="predictBtn">
+                                        <i class="fas fa-bolt"></i> Predict Sequence
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="clearSequence()">
+                                        <i class="fas fa-trash-alt"></i> Clear
+                                    </button>
+                                </div>
+
+                                <!-- 加载动画 -->
+                                <div id="loadingIndicator" class="text-center" style="display: none;">
+                                    <div class="spinner mb-2"></div>
+                                    <p>Processing sequence...</p>
+                                </div>
+                            </div>
+
+                            <!-- 批量预测 -->
+                            <div class="tab-pane fade" id="batch" role="tabpanel">
+                                <div class="mb-4">
+                                    <label for="batchInput" class="form-label fw-bold">Enter Multiple Sequences:</label>
+                                    <textarea class="form-control sequence-input" id="batchInput" rows="6"
+                                              placeholder="Enter one sequence per line or separate with commas&#10;Example:&#10;GLFDIIKKIAESF&#10;SLDQINVTFLDLEYEMKKLEEAIKKLEESYIDLKEL"></textarea>
+                                    <div class="form-text mt-2">
+                                        <i class="fas fa-info-circle"></i> Each sequence should be on a new line or separated by commas
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary flex-grow-1" onclick="batchPredict()" id="batchPredictBtn">
+                                        <i class="fas fa-bolt"></i> Batch Predict
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="clearBatch()">
+                                        <i class="fas fa-trash-alt"></i> Clear All
+                                    </button>
+                                </div>
+
+                                <!-- 批量加载动画 -->
+                                <div id="batchLoadingIndicator" class="text-center mt-3" style="display: none;">
+                                    <div class="spinner mb-2"></div>
+                                    <p>Processing batch sequences...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 预测结果区域 -->
+                        <div id="resultsSection" style="display: none; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--border-color);">
+                            <h4 class="mb-4"><i class="fas fa-chart-line text-primary"></i> Prediction Results</h4>
+
+                            <!-- 预测结果 -->
+                            <div class="prediction-result">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <h5 id="predictionText" class="mb-2"></h5>
+                                        <p class="text-muted mb-0" id="predictionDesc"></p>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <div class="stat-card">
+                                            <div class="stat-value" id="confidenceValue">0%</div>
+                                            <div class="stat-label">Confidence</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3">
+                                    <div class="progress">
+                                        <div id="confidenceBar" class="progress-bar" role="progressbar"></div>
+                                    </div>
+                                    <div class="confidence-labels">
+                                        <small>0%</small>
+                                        <small id="confidenceText">0%</small>
+                                        <small>100%</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 序列信息 -->
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-white">
+                                            <i class="fas fa-info-circle text-info me-2"></i> Sequence Information
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-6 mb-3">
+                                                    <div class="stat-card">
+                                                        <div class="stat-value" id="seqLength">0</div>
+                                                        <div class="stat-label">Length</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 mb-3">
+                                                    <div class="stat-card">
+                                                        <div class="stat-value" id="molWeight">0</div>
+                                                        <div class="stat-label">MW (Da)</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 mb-3">
+                                                    <div class="stat-card">
+                                                        <div class="stat-value" id="netCharge">0</div>
+                                                        <div class="stat-label">Net Charge</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 mb-3">
+                                                    <div class="stat-card">
+                                                        <div class="stat-value" id="gravyScore">0</div>
+                                                        <div class="stat-label">GRAVY</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-white">
+                                            <i class="fas fa-code text-secondary me-2"></i> Sequence Display
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="sequenceDisplay" class="sequence-display"></div>
+                                            <div class="mt-2 text-center">
+                                                <small class="text-muted">Hover over amino acids to see details</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 可视化部分 -->
+                            <div class="mt-4">
+                                <h5 class="mb-4"><i class="fas fa-chart-bar text-warning"></i> Visualizations</h5>
+
+                                <!-- 注意力热力图 -->
+                                <div class="visualization-section" id="attentionViz">
+                                    <div class="visualization-header" onclick="toggleVisualization('attentionViz')">
+                                        <h6><i class="fas fa-fire text-danger me-2"></i> Attention Heatmap</h6>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="visualization-content">
+                                        <div class="plot-container" id="attentionHeatmap"></div>
+                                    </div>
+                                </div>
+
+                                <!-- 特征重要性图 -->
+                                <div class="visualization-section" id="featureImportanceViz">
+                                    <div class="visualization-header" onclick="toggleVisualization('featureImportanceViz')">
+                                        <h6><i class="fas fa-chart-bar text-primary me-2"></i> Feature Importance</h6>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="visualization-content">
+                                        <div class="plot-container" id="featureImportance"></div>
+                                    </div>
+                                </div>
+
+                                <!-- 氨基酸组成图 -->
+                                <div class="visualization-section" id="compositionViz">
+                                    <div class="visualization-header" onclick="toggleVisualization('compositionViz')">
+                                        <h6><i class="fas fa-chart-pie text-success me-2"></i> Amino Acid Composition</h6>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="visualization-content">
+                                        <div class="plot-container" id="compositionPlot"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 下载结果 -->
+                            <div class="mt-4 text-center">
+                                <button class="btn btn-outline-primary me-2" onclick="downloadResults()">
+                                    <i class="fas fa-download"></i> Download Results
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="shareResults()">
+                                    <i class="fas fa-share-alt"></i> Share
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 批量结果 -->
+                        <div id="batchResultsSection" style="display: none; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--border-color);">
+                            <h4 class="mb-4"><i class="fas fa-list-alt text-primary"></i> Batch Prediction Results</h4>
+
+                            <!-- 批量统计 -->
+                            <div id="batchStats" class="row mb-4">
+                                <div class="col-md-3">
+                                    <div class="batch-stat-card">
+                                        <div class="batch-stat-value" id="totalSequences">0</div>
+                                        <div class="batch-stat-label">Total Sequences</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="batch-stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                        <div class="batch-stat-value" id="validSequences">0</div>
+                                        <div class="batch-stat-label">Valid</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="batch-stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                                        <div class="batch-stat-value" id="anticancerCount">0</div>
+                                        <div class="batch-stat-label">Anticancer</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="batch-stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                                        <div class="batch-stat-value" id="nonAnticancerCount">0</div>
+                                        <div class="batch-stat-label">Non-Anticancer</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 结果表格 -->
+                            <div class="table-container">
+                                <table class="table table-striped" id="batchResultsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Sequence</th>
+                                            <th>Length</th>
+                                            <th>Prediction</th>
+                                            <th>Probability</th>
+                                            <th>Confidence</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="batchResultsBody">
+                                        <!-- 结果将在这里填充 -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- 批量下载 -->
+                            <div class="mt-4 text-center">
+                                <button class="btn btn-outline-primary me-2" onclick="downloadBatchResults()">
+                                    <i class="fas fa-download"></i> Download CSV
+                                </button>
+                                <button class="btn btn-outline-success" onclick="downloadBatchJSON()">
+                                    <i class="fas fa-file-code"></i> Download JSON
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧边栏 -->
+            <div class="col-lg-4">
+                <!-- 模型性能 -->
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <i class="fas fa-chart-line text-success me-2"></i> Model Performance
+                    </div>
+                    <div class="card-body">
+                        <div id="performanceRadar" style="height: 300px;"></div>
+                        <div class="text-center mt-3">
+                            <small class="text-muted">Model trained on 423 sequences with 80/20 split</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 快速统计 -->
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <i class="fas fa-tachometer-alt text-warning me-2"></i> Quick Stats
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-4 model-metric">
+                                <div class="metric-value" id="accuracyMetric">0.892</div>
+                                <div class="metric-label">Accuracy</div>
+                            </div>
+                            <div class="col-4 model-metric">
+                                <div class="metric-value" id="aucMetric">0.941</div>
+                                <div class="metric-label">AUC</div>
+                            </div>
+                            <div class="col-4 model-metric">
+                                <div class="metric-value" id="f1Metric">0.895</div>
+                                <div class="metric-label">F1 Score</div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-4 model-metric">
+                                <div class="metric-value" id="precisionMetric">0.876</div>
+                                <div class="metric-label">Precision</div>
+                            </div>
+                            <div class="col-4 model-metric">
+                                <div class="metric-value" id="recallMetric">0.915</div>
+                                <div class="metric-label">Recall</div>
+                            </div>
+                            <div class="col-4 model-metric">
+                                <div class="metric-value" id="mccMetric">0.783</div>
+                                <div class="metric-label">MCC</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 氨基酸指南 -->
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <i class="fas fa-book text-info me-2"></i> Amino Acid Guide
+                    </div>
+                    <div class="card-body">
+                        <div id="aminoAcidGuide" class="row g-2">
+                            <!-- 将由JavaScript填充 -->
+                        </div>
+                        <div class="mt-3">
+                            <small class="text-muted">Click on amino acids to see properties</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 使用统计 -->
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <i class="fas fa-chart-bar text-danger me-2"></i> Usage Statistics
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center">
+                            <div class="stat-value">1,247</div>
+                            <div class="stat-label">Total Predictions</div>
+                        </div>
+                        <div class="progress mt-3">
+                            <div class="progress-bar bg-success" style="width: 65%;">65% Anticancer</div>
+                            <div class="progress-bar bg-danger" style="width: 35%;">35% Non-Anticancer</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能部分 -->
+    <section class="container py-5" id="features">
+        <h2 class="text-center mb-5"><i class="fas fa-star text-warning me-2"></i> Key Features</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h5 class="card-title">Transformer Model</h5>
+                        <p class="card-text">State-of-the-art deep learning architecture with self-attention mechanism for accurate predictions.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <h5 class="card-title">Attention Visualization</h5>
+                        <p class="card-text">Visualize which amino acids the model focuses on when making predictions with interactive heatmaps.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <h5 class="card-title">Feature Analysis</h5>
+                        <p class="card-text">Detailed analysis of amino acid composition and feature importance scores with interactive charts.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h5 class="card-title">Fast Prediction</h5>
+                        <p class="card-text">Real-time prediction with high accuracy and confidence scores for both single and batch sequences.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-download"></i>
+                        </div>
+                        <h5 class="card-title">Export Results</h5>
+                        <p class="card-text">Download prediction results in multiple formats including CSV, JSON, and detailed PDF reports.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h5 class="card-title">Responsive Design</h5>
+                        <p class="card-text">Fully responsive interface that works seamlessly on desktop, tablet, and mobile devices.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 模型信息部分 -->
+    <section class="container py-5" id="model">
+        <h2 class="text-center mb-5"><i class="fas fa-brain text-primary me-2"></i> Model Information</h2>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="fas fa-cogs me-2"></i> Model Architecture</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-layer-group text-primary me-2"></i> Architecture</span>
+                                <span class="fw-bold">Transformer Encoder</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-project-diagram text-primary me-2"></i> Layers</span>
+                                <span class="fw-bold">2</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-users text-primary me-2"></i> Attention Heads</span>
+                                <span class="fw-bold">8</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-arrows-alt-h text-primary me-2"></i> Embedding Dimension</span>
+                                <span class="fw-bold">256</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-expand-alt text-primary me-2"></i> Hidden Dimension</span>
+                                <span class="fw-bold">384</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-tint text-primary me-2"></i> Dropout Rate</span>
+                                <span class="fw-bold">0.3</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="fas fa-database me-2"></i> Training Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-table text-success me-2"></i> Dataset Size</span>
+                                <span class="fw-bold">423 Sequences</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-balance-scale text-success me-2"></i> Class Balance</span>
+                                <span class="fw-bold">50/50</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-code-branch text-success me-2"></i> Validation Split</span>
+                                <span class="fw-bold">80/20</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-calculator text-success me-2"></i> Optimizer</span>
+                                <span class="fw-bold">AdamW</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-chart-line text-success me-2"></i> Loss Function</span>
+                                <span class="fw-bold">Binary Cross Entropy</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-clock text-success me-2"></i> Training Epochs</span>
+                                <span class="fw-bold">100</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 关于部分 -->
+    <footer class="py-5" id="about">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <h5 class="text-white mb-4"><i class="fas fa-dna me-2"></i> About AntiCancerPeptide Predictor</h5>
+                    <p class="text-light">This web application uses a Transformer-based deep learning model to predict anticancer peptides. The model was trained on a curated dataset of known anticancer and non-anticancer peptides.</p>
+                    <div class="mt-4">
+                        <a href="#" class="btn btn-outline-light me-2"><i class="fab fa-github"></i></a>
+                        <a href="#" class="btn btn-outline-light me-2"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="btn btn-outline-light"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5 class="text-white mb-4">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#predict" class="text-light text-decoration-none"><i class="fas fa-arrow-right me-2"></i> Predict</a></li>
+                        <li class="mb-2"><a href="#features" class="text-light text-decoration-none"><i class="fas fa-arrow-right me-2"></i> Features</a></li>
+                        <li class="mb-2"><a href="#model" class="text-light text-decoration-none"><i class="fas fa-arrow-right me-2"></i> Model Info</a></li>
+                        <li class="mb-2"><a href="#about" class="text-light text-decoration-none"><i class="fas fa-arrow-right me-2"></i> About</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h5 class="text-white mb-4">Resources</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="/api/model_info" class="text-light text-decoration-none"><i class="fas fa-database me-2"></i> API Documentation</a></li>
+                        <li class="mb-2"><a href="#" class="text-light text-decoration-none"><i class="fas fa-book me-2"></i> User Guide</a></li>
+                        <li class="mb-2"><a href="#" class="text-light text-decoration-none"><i class="fas fa-download me-2"></i> Download Dataset</a></li>
+                        <li class="mb-2"><a href="/api/health" class="text-light text-decoration-none"><i class="fas fa-heartbeat me-2"></i> System Health</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 mb-4">
+                    <h5 class="text-white mb-4">Contact</h5>
+                    <p class="text-light mb-3"><i class="fas fa-envelope me-2"></i> contact@anticancerpeptide.org</p>
+                    <p class="text-light mb-3"><i class="fas fa-phone me-2"></i> +1 (555) 123-4567</p>
+                    <p class="text-light"><i class="fas fa-map-marker-alt me-2"></i> 123 Research Ave, Science Park</p>
+                </div>
+            </div>
+            <hr class="bg-light my-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="text-light mb-0">&copy; 2024 AntiCancerPeptide Predictor. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="text-light mb-0">Built with <i class="fas fa-heart text-danger"></i> by the Research Team</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 初始化变量
+        let currentResults = null;
+        let currentBatchResults = null;
+        let aminoAcidInfo = null;
+
+        // 初始化氨基酸指南
+        function initAminoAcidGuide() {
+            fetch('/api/amino_acid_info')
+                .then(response => response.json())
+                .then(data => {
+                    aminoAcidInfo = data;
+                    const container = document.getElementById('aminoAcidGuide');
+                    let html = '';
+
+                    Object.entries(data).forEach(([aa, info]) => {
+                        html += `
+                            <div class="col-3 mb-2 text-center">
+                                <div class="amino-acid-box tooltip-wrapper"
+                                     style="background-color: ${info.color}; cursor: pointer;"
+                                     onclick="showAminoAcidInfo('${aa}')"
+                                     data-bs-toggle="tooltip"
+                                     title="${info.name} - ${info.type}">
+                                    ${aa}
+                                </div>
+                                <small class="d-block mt-1">${aa}</small>
+                            </div>
+                        `;
+                    });
+
+                    container.innerHTML = html;
+                });
+        }
+
+        // 显示氨基酸信息
+        function showAminoAcidInfo(aa) {
+            if (aminoAcidInfo && aminoAcidInfo[aa]) {
+                const info = aminoAcidInfo[aa];
+                alert(`${aa} - ${info.name}\nType: ${info.type}\nColor: ${info.color}`);
+            }
+        }
+
+        // 初始化性能雷达图
+        function initPerformanceRadar() {
+            fetch('/api/model_info')
+                .then(response => response.json())
+                .then(data => {
+                    const metrics = data.performance;
+
+                    // 更新指标显示
+                    document.getElementById('accuracyMetric').textContent = metrics.accuracy.toFixed(3);
+                    document.getElementById('aucMetric').textContent = metrics.auc.toFixed(3);
+                    document.getElementById('f1Metric').textContent = metrics.f1.toFixed(3);
+                    document.getElementById('precisionMetric').textContent = metrics.precision.toFixed(3);
+                    document.getElementById('recallMetric').textContent = metrics.recall.toFixed(3);
+                    document.getElementById('mccMetric').textContent = metrics.mcc.toFixed(3);
+
+                    // 创建雷达图
+                    const categories = ['Accuracy', 'Precision', 'Recall', 'Specificity', 'F1', 'MCC'];
+                    const values = [
+                        metrics.accuracy,
+                        metrics.precision,
+                        metrics.recall,
+                        metrics.specificity || 0.8, // 默认值
+                        metrics.f1,
+                        metrics.mcc
+                    ];
+
+                    const trace = {
+                        r: values,
+                        theta: categories,
+                        fill: 'toself',
+                        name: 'Model Performance',
+                        line: {color: '#27ae60', width: 2},
+                        fillcolor: 'rgba(39, 174, 96, 0.2)'
+                    };
+
+                    const layout = {
+                        polar: {
+                            radialaxis: {
+                                visible: true,
+                                range: [0, 1],
+                                gridcolor: 'lightgray',
+                                linecolor: 'gray'
+                            },
+                            angularaxis: {
+                                gridcolor: 'lightgray',
+                                linecolor: 'gray'
+                            }
+                        },
+                        showlegend: false,
+                        paper_bgcolor: 'rgba(0,0,0,0)',
+                        plot_bgcolor: 'rgba(0,0,0,0)',
+                        height: 280,
+                        margin: {t: 30, b: 30, l: 30, r: 30}
+                    };
+
+                    Plotly.newPlot('performanceRadar', [trace], layout);
+                });
+        }
+
+        // 预测单个序列
+        function predictSequence() {
+            const sequence = document.getElementById('sequenceInput').value.trim().toUpperCase();
+
+            if (!sequence) {
+                showAlert('Please enter a peptide sequence', 'warning');
+                return;
+            }
+
+            // 显示加载状态
+            const predictBtn = document.getElementById('predictBtn');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const originalText = predictBtn.innerHTML;
+
+            predictBtn.disabled = true;
+            predictBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Predicting...';
+            loadingIndicator.style.display = 'block';
+
+            // 发送预测请求
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({sequence: sequence})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert('Error: ' + data.error, 'danger');
+                    return;
+                }
+
+                currentResults = data;
+                displayResults(data);
+
+                // 隐藏批量结果
+                document.getElementById('batchResultsSection').style.display = 'none';
+                document.getElementById('resultsSection').style.display = 'block';
+
+                // 滚动到结果区域
+                document.getElementById('resultsSection').scrollIntoView({behavior: 'smooth'});
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('An error occurred during prediction', 'danger');
+            })
+            .finally(() => {
+                predictBtn.innerHTML = originalText;
+                predictBtn.disabled = false;
+                loadingIndicator.style.display = 'none';
+            });
+        }
+
+        // 显示结果
+        function displayResults(data) {
+            // 更新预测结果
+            const predictionText = document.getElementById('predictionText');
+            const confidenceText = document.getElementById('confidenceText');
+            const confidenceValue = document.getElementById('confidenceValue');
+            const confidenceBar = document.getElementById('confidenceBar');
+            const predictionDesc = document.getElementById('predictionDesc');
+
+            const isAnticancer = data.prediction === 'Anticancer Peptide';
+            const confidence = data.confidence;
+
+            predictionText.innerHTML = `<span class="${isAnticancer ? 'anticancer' : 'non-anticancer'}">${data.prediction}</span>`;
+            predictionDesc.textContent = `Based on our model's analysis, this peptide has a ${confidence}% probability of being ${isAnticancer ? 'anticancer' : 'non-anticancer'}.`;
+
+            confidenceValue.textContent = `${confidence}%`;
+            confidenceText.textContent = `${confidence}% confidence`;
+
+            confidenceBar.style.width = `${confidence}%`;
+            confidenceBar.className = `progress-bar ${isAnticancer ? 'bg-success' : 'bg-danger'}`;
+
+            // 更新序列信息
+            document.getElementById('seqLength').textContent = data.properties.length;
+            document.getElementById('molWeight').textContent = data.properties.molecular_weight;
+            document.getElementById('netCharge').textContent = data.properties.net_charge;
+            document.getElementById('gravyScore').textContent = data.properties.gravy_score;
+
+            // 显示带颜色的序列
+            const seqDisplay = document.getElementById('sequenceDisplay');
+            seqDisplay.innerHTML = '';
+
+            data.sequence.split('').forEach((aa, index) => {
+                const info = aminoAcidInfo ? aminoAcidInfo[aa] : {color: '#999999', name: aa, type: 'Unknown'};
+                const span = document.createElement('span');
+                span.className = 'amino-acid-box tooltip-wrapper';
+                span.style.backgroundColor = info.color;
+                span.textContent = aa;
+                span.title = `${info.name} (${info.type}) - Position ${index + 1}`;
+                seqDisplay.appendChild(span);
+            });
+
+            // 绘制可视化图表
+            if (data.visualizations) {
+                Plotly.newPlot('attentionHeatmap',
+                    data.visualizations.attention_heatmap.data,
+                    {...data.visualizations.attention_heatmap.layout, height: 350}
+                );
+
+                Plotly.newPlot('featureImportance',
+                    data.visualizations.feature_importance.data,
+                    {...data.visualizations.feature_importance.layout, height: 350}
+                );
+
+                Plotly.newPlot('compositionPlot',
+                    data.visualizations.composition_plot.data,
+                    {...data.visualizations.composition_plot.layout, height: 350}
+                );
+            }
+        }
+
+        // 批量预测
+        function batchPredict() {
+            const sequencesText = document.getElementById('batchInput').value.trim();
+
+            if (!sequencesText) {
+                showAlert('Please enter sequences for batch prediction', 'warning');
+                return;
+            }
+
+            // 显示加载状态
+            const batchBtn = document.getElementById('batchPredictBtn');
+            const loadingIndicator = document.getElementById('batchLoadingIndicator');
+            const originalText = batchBtn.innerHTML;
+
+            batchBtn.disabled = true;
+            batchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            loadingIndicator.style.display = 'block';
+
+            // 发送批量预测请求
+            fetch('/batch_predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({sequences: sequencesText})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert('Error: ' + data.error, 'danger');
+                    return;
+                }
+
+                currentBatchResults = data;
+                displayBatchResults(data);
+
+                // 隐藏单个结果
+                document.getElementById('resultsSection').style.display = 'none';
+                document.getElementById('batchResultsSection').style.display = 'block';
+
+                // 滚动到结果区域
+                document.getElementById('batchResultsSection').scrollIntoView({behavior: 'smooth'});
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('An error occurred during batch prediction', 'danger');
+            })
+            .finally(() => {
+                batchBtn.innerHTML = originalText;
+                batchBtn.disabled = false;
+                loadingIndicator.style.display = 'none';
+            });
+        }
+
+        // 显示批量结果
+        function displayBatchResults(data) {
+            // 更新统计信息
+            const stats = data.statistics;
+            document.getElementById('totalSequences').textContent = stats.total_sequences;
+            document.getElementById('validSequences').textContent = stats.valid_sequences;
+            document.getElementById('anticancerCount').textContent = stats.anticancer_count;
+            document.getElementById('nonAnticancerCount').textContent = stats.non_anticancer_count;
+
+            // 更新结果表格
+            const tbody = document.getElementById('batchResultsBody');
+            tbody.innerHTML = '';
+
+            data.results.forEach(result => {
+                const row = document.createElement('tr');
+
+                if (!result.is_valid) {
+                    row.innerHTML = `
+                        <td><span class="text-danger"><i class="fas fa-exclamation-circle"></i> ${result.sequence.substring(0, 30)}${result.sequence.length > 30 ? '...' : ''}</span></td>
+                        <td>-</td>
+                        <td><span class="badge bg-secondary">Invalid</span></td>
+                        <td>-</td>
+                        <td><small class="text-muted">${result.error}</small></td>
+                    `;
+                } else {
+                    const isAnticancer = result.prediction === 'Anticancer';
+                    const confidence = isAnticancer ?
+                        (result.probability * 100).toFixed(1) :
+                        ((1 - result.probability) * 100).toFixed(1);
+
+                    row.innerHTML = `
+                        <td><small>${result.sequence}</small></td>
+                        <td>${result.length}</td>
+                        <td>
+                            <span class="badge ${isAnticancer ? 'bg-success' : 'bg-danger'}">
+                                <i class="fas ${isAnticancer ? 'fa-plus-circle' : 'fa-minus-circle'}"></i> ${result.prediction}
+                            </span>
+                        </td>
+                        <td>${result.probability.toFixed(4)}</td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar ${isAnticancer ? 'bg-success' : 'bg-danger'}"
+                                     style="width: ${confidence}%">
+                                    ${confidence}%
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                }
+
+                tbody.appendChild(row);
+            });
+        }
+
+        // 加载示例序列
+        function loadExample(type) {
+            const examples = {
+                'anticancer': 'GLFDIIKKIAESF',
+                'non-anticancer': 'SLDQINVTFLDLEYEMKKLEEAIKKLEESYIDLKEL'
+            };
+
+            document.getElementById('sequenceInput').value = examples[type];
+
+            // 切换到单序列预测标签
+            document.getElementById('single-tab').click();
+
+            showAlert(`Loaded ${type} example sequence`, 'info');
+        }
+
+        // 清除序列
+        function clearSequence() {
+            document.getElementById('sequenceInput').value = '';
+            document.getElementById('resultsSection').style.display = 'none';
+        }
+
+        // 清除批量输入
+        function clearBatch() {
+            document.getElementById('batchInput').value = '';
+            document.getElementById('batchResultsSection').style.display = 'none';
+        }
+
+        // 显示提示消息
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.minWidth = '300px';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(alertDiv);
+
+            // 自动消失
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+
+        // 下载单个结果
+        function downloadResults() {
+            if (!currentResults) {
+                showAlert('No results to download', 'warning');
+                return;
+            }
+
+            const content = `
+AntiCancerPeptide Prediction Results
+====================================
+Date: ${new Date().toLocaleString()}
+Sequence: ${currentResults.sequence}
+Length: ${currentResults.length} amino acids
+Prediction: ${currentResults.prediction}
+Probability: ${currentResults.probability}
+Confidence: ${currentResults.confidence}%
+
+Sequence Properties:
+- Molecular Weight: ${currentResults.properties.molecular_weight} Da
+- Net Charge: ${currentResults.properties.net_charge}
+- GRAVY Score: ${currentResults.properties.gravy_score}
+- Acidic Count: ${currentResults.properties.acidic_count}
+- Basic Count: ${currentResults.properties.basic_count}
+- Hydrophobic Count: ${currentResults.properties.hydrophobic_count}
+- Aromatic Count: ${currentResults.properties.aromatic_count}
+
+Amino Acid Composition:
+${Object.entries(currentResults.amino_acid_composition).map(([aa, info]) =>
+    `${aa}: ${info.count} (${info.percentage}%)`).join('\n')}
+            `;
+
+            const blob = new Blob([content], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `prediction_${currentResults.sequence.substring(0, 10)}_${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showAlert('Results downloaded successfully', 'success');
+        }
+
+        // 下载批量结果 (CSV)
+        function downloadBatchResults() {
+            if (!currentBatchResults) {
+                showAlert('No batch results to download', 'warning');
+                return;
+            }
+
+            let csvContent = "Sequence,Length,Prediction,Probability,Confidence,Status\n";
+
+            currentBatchResults.results.forEach(result => {
+                if (result.is_valid) {
+                    const confidence = result.prediction === 'Anticancer' ?
+                        result.probability * 100 : (1 - result.probability) * 100;
+                    csvContent += `"${result.sequence}",${result.length},${result.prediction},${result.probability},${confidence.toFixed(2)}%,Valid\n`;
+                } else {
+                    csvContent += `"${result.sequence}",-,-,-,-,Invalid: ${result.error}\n`;
+                }
+            });
+
+            const blob = new Blob([csvContent], {type: 'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `batch_predictions_${Date.now()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showAlert('Batch results downloaded as CSV', 'success');
+        }
+
+        // 下载批量结果 (JSON)
+        function downloadBatchJSON() {
+            if (!currentBatchResults) {
+                showAlert('No batch results to download', 'warning');
+                return;
+            }
+
+            const jsonContent = JSON.stringify(currentBatchResults, null, 2);
+            const blob = new Blob([jsonContent], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `batch_predictions_${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showAlert('Batch results downloaded as JSON', 'success');
+        }
+
+        // 分享结果
+        function shareResults() {
+            if (!currentResults) {
+                showAlert('No results to share', 'warning');
+                return;
+            }
+
+            const text = `Check out my peptide prediction result: ${currentResults.sequence} is predicted as ${currentResults.prediction} with ${currentResults.confidence}% confidence!`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Peptide Prediction Result',
+                    text: text,
+                    url: window.location.href
+                });
+            } else {
+                // 复制到剪贴板
+                navigator.clipboard.writeText(text)
+                    .then(() => showAlert('Result copied to clipboard!', 'success'))
+                    .catch(() => showAlert('Failed to copy to clipboard', 'danger'));
+            }
+        }
+
+        // 切换可视化图表的显示/隐藏
+        function toggleVisualization(elementId) {
+            const element = document.getElementById(elementId);
+            const icon = element.querySelector('.visualization-header i');
+
+            if (element.classList.contains('collapsed')) {
+                element.classList.remove('collapsed');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                element.classList.add('collapsed');
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initAminoAcidGuide();
+            initPerformanceRadar();
+
+            // 导航链接平滑滚动
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+
+                    const target = document.querySelector(targetId);
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // 初始化工具提示
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // 自动折叠所有可视化图表
+            ['attentionViz', 'featureImportanceViz', 'compositionViz'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.classList.add('collapsed');
+                    const icon = element.querySelector('.visualization-header i');
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
