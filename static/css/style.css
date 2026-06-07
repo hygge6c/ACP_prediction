@@ -1,4 +1,6 @@
 /* 可视化容器样式优化 */
+.visualization-section.collapsed .visualization-content { display: none; }
+
 .visualization-container {
     background: white;
     border-radius: 10px;
